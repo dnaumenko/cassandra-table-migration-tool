@@ -53,10 +53,12 @@ object MigrateTable {
            case "export" => runExport(config)
            case "import" => runImport(config)
          }
-     }
+    }
+    System.exit(0)
   }
 
   def runExport(config: Config): Unit = {
+    log("Export start")
     val session = getSession(config.hostname, config.port, config.keyspace)
 
     val result = session.execute(QueryBuilder.select().json().from(config.source))
@@ -67,14 +69,17 @@ object MigrateTable {
         writer.write("\n")
       }
     }
+    log("Export end")
   }
 
   def runImport(config: Config): Unit = {
+    log("Import start")
     val session = getSession(config.hostname, config.port, config.keyspace)
 
     Source.fromFile(config.source).getLines().foreach( line =>
       session.execute(QueryBuilder.insertInto(config.destination).json(line))
     )
+    log("Import end")
   }
 
   private def getSession(hostname: String, port: Int, keyspace: String) = {
