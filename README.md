@@ -3,10 +3,12 @@ Migrate Table Tool for simple table migration in Cassandra
 
 
 ## Build
-In a project directory, run `sbt assembly` to produce an uber-jar.
+In a project directory, run `sbt assembly` to produce an uber-jar or download [binary jar](https://github.com/dnaumenko/cassandra-table-migration-tool/releases/download/1.0/cassandra-migrate.jar)
 
 ## Run
-java -jar cassandra-table-migration-tool-assembly-1.0.jar
+For export, run `java -jar cassandra-migrate.jar export -h <hostname> -k <keyspace> -s <table> -d <filename>`
+
+For import, run `java -jar cassandra-migrate.jar import -h <hostname> -k <keyspace> -s <filename> -d <table>`
 
 ## Show usage output: 
 
