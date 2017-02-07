@@ -22,12 +22,12 @@ For import, run `java -jar cassandra-migrate.jar import -h <hostname> -k <keyspa
       -d, --dest <value>       target (table name or file) to store results of export/import
       -v, --verbose <value>    enable debug mode to show intermediate results, disabled by default
       -t, --debugThreshold <value>
-                               how often print debug messages. By default, after 5000 entries
+                               controls how often a tool prints debug messages. By default, after 5000 entries
     
     Following commands supported:
     
     Command: export [options]
     export will dump data from the given source table name to a specified folder
-      -l, --limit <value>      how much lines to import/export (0 by default, which means there is no limit)
+      -l, --limit <value>      how much rows to export (0 by default, which means there is no limit)
     Command: import
     import will load data from the given folder to a specified table
