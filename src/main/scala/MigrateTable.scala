@@ -1,7 +1,7 @@
 import java.io.{File, PrintWriter}
 
-import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.datastax.driver.core.{Cluster, ConsistencyLevel}
 
 import scala.collection.JavaConversions._
 import scala.io.Source
@@ -32,9 +32,13 @@ object MigrateTable {
 
     note("\nFollowing commands supported:\n")
 
-    cmd("export").action( (_, c) =>
-      c.copy(command = "export")
-    ).text("export will dump data from the given source table name to a specified folder")
+    cmd("export").action( (_, c) => c.copy(command = "export"))
+      .text("export will dump data from the given source table name to a specified folder")
+      .children({
+        opt[Int]('l', "limit").action( (limit, config) =>
+          config.copy(limit = limit)
+        ).text("how much lines to import/export (0 by default, which means there is no limit)")
+      })
 
     cmd("import").action( (_, c) =>
       c.copy(command = "import")
@@ -61,7 +65,12 @@ object MigrateTable {
     log("Export start")
     val session = getSession(config.hostname, config.port, config.keyspace)
 
-    val result = session.execute(QueryBuilder.select().json().from(config.source))
+    val query = QueryBuilder.select().json().from(config.source)
+    if (config.limit > 0) {
+      query.limit(config.limit)
+    }
+    query.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM)
+    val result = session.execute(query)
 
     withPrintWriter(new File(config.destination)) { writer =>
       result.all().iterator().map(r => r.getString(0)).foreach { string =>
@@ -76,8 +85,8 @@ object MigrateTable {
     log("Import start")
     val session = getSession(config.hostname, config.port, config.keyspace)
 
-    Source.fromFile(config.source).getLines().foreach( line =>
-      session.execute(QueryBuilder.insertInto(config.destination).json(line))
+    Source.fromFile(config.source).getLines().filter(!_.isEmpty).foreach( line =>
+      session.execute(QueryBuilder.insertInto(config.destination).json(line).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
     )
     log("Import end")
   }

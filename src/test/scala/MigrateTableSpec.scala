@@ -12,7 +12,14 @@ class MigrateTableSpec extends Specification {
 
       val lines = Source.fromFile("dump.json").getLines()
       lines must not be empty
+    }
 
+    "save no more lines than in a specified limit" in {
+      val config = Config(limit = 1, source = "vault", destination = "dump2.json", hostname = "localhost", keyspace = "vault")
+      MigrateTable.runExport(config)
+
+      val lines = Source.fromFile("dump2.json").getLines()
+      lines must haveSize(1)
     }
   }
 
