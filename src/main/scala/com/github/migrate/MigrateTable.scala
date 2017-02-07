@@ -111,7 +111,6 @@ object MigrateTable {
     logger.info("Import start")
     withSession(config.hostname, config.port, config.keyspace) { session =>
       val lines = Source.fromFile(config.source).getLines().filter(!_.isEmpty)
-      logger.info(s"Got ${lines.size} rows to import")
 
       var count = 0
       lines.foreach( line => {
