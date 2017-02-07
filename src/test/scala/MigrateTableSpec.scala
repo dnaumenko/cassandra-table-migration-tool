@@ -3,7 +3,7 @@ import org.specs2.mutable.Specification
 import scala.io.Source
 
 class MigrateTableSpec extends Specification {
-//  args(skipAll = true)
+  args(skipAll = true)
 
   "The 'runExport' method" should {
     "save data from table to file in json format" in {
