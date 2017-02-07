@@ -3,6 +3,9 @@
 
 .idea
 
+
+dump*json
+
 # sbt specific
 .cache
 .history

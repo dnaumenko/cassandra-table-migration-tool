@@ -1,3 +1,4 @@
+import com.github.migrate.{Config, MigrateTable}
 import org.specs2.mutable.Specification
 
 import scala.io.Source
