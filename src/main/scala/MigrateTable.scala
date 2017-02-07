@@ -15,15 +15,19 @@ object MigrateTable {
 
     cmd("export").action( (_, c) =>
       c.copy(command = "export")
-    ).text("export will dump a data from the given source table name to a specified folder")
+    ).text("export will dump data from the given source table name to a specified folder")
 
     cmd("import").action( (_, c) =>
       c.copy(command = "import")
-    ).text("import will load a data from the given folder to a specified table")
+    ).text("import will load data from the given folder to a specified table")
+
+    checkConfig( c =>
+      if (c.command.isEmpty) failure("Command can't be empty") else success
+    )
   }
 
   def main(args: Array[String]): Unit = {
-    optionParser.parse(args, Config()) map {
+    optionParser.parse(args, Config()) foreach {
       config =>
          println(s"Going to ${config.command} from ${config.source} to ${config.destination}")
          config.command match {
