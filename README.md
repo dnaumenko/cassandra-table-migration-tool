@@ -3,7 +3,7 @@ Migrate Table Tool for simple table migration in Cassandra
 
 
 ## Build
-In a project directory, run `sbt assembly` to produce an uber-jar or download [binary jar](https://github.com/dnaumenko/cassandra-table-migration-tool/releases/download/1.0/cassandra-migrate.jar)
+In a project directory, run `sbt assembly` to produce an uber-jar or download [binary jar](https://github.com/dnaumenko/cassandra-table-migration-tool/releases/download/1.1/cassandra-migrate.jar)
 
 ## Run
 For export, run `java -jar cassandra-migrate.jar export -h <hostname> -k <keyspace> -s <table> -d <filename>`
@@ -39,5 +39,5 @@ In addition, there are also simple transformation commands:
     transform will update the given dump file and stores a result in destination file
     Command: transform add-column [options]
     adds new column in json file
-      -v, --value <value>      column value
       -n, --name <value>       column name
+      -v, --value <value>      column value
