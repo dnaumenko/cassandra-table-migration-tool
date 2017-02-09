@@ -1,5 +1,5 @@
 name := "cassandra-table-migration-tool"
-version := "1.0"
+version := "1.1"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0"
 libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.2"
