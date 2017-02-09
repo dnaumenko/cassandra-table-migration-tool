@@ -5,6 +5,8 @@ import java.io.{File, PrintWriter}
 import ch.qos.logback.classic.Level
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.{Cluster, ConsistencyLevel, Session}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
@@ -12,13 +14,14 @@ import scala.io.Source
 
 object MigrateTable {
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+  val mapper = new ObjectMapper()
 
   val optionParser = new scopt.OptionParser[Config]("cassandra-table-migration-tool") {
     head("Migrate Table Tool for simple table migration in Cassandra")
 
     opt[String]('h', "hostname").action( (hostname, config) =>
       config.copy(hostname = hostname)
-    ).text("Cassandra DB's hostname").required()
+    ).text("Cassandra DB's hostname")
 
     opt[Int]('p', "port").action( (port, config) =>
       config.copy(port = port)
@@ -36,7 +39,7 @@ object MigrateTable {
       config.copy(destination = destination)
     ).text("target (table name or file) to store results of export/import").required()
 
-    opt[Boolean]('v', "verbose").action( (debugMode, config) =>
+    opt[Boolean]("verbose").action( (debugMode, config) =>
       config.copy(debugMode = debugMode)
     ).text("enable debug mode to show intermediate results, disabled by default")
 
@@ -58,6 +61,18 @@ object MigrateTable {
       c.copy(command = "import")
     ).text("import will load data from the given folder to a specified table")
 
+    cmd("transform").action( (_, c) =>
+      c.copy(command = "transform")
+    ).text("transform will update the given dump file and stores a result in destination file").children({
+      cmd("add-column").action( (_, config) =>  config.copy(subCommand = "add-column"))
+        .text("adds new column in json file").children({
+          opt[String]('n', "name").text("column name").action( (name, config) =>
+            config.copy(addColumnConfig = config.addColumnConfig.copy(name = name)))
+          opt[String]('v', "value").text("column value").action( (value, config) =>
+            config.copy(addColumnConfig = config.addColumnConfig.copy(value = value)))
+      })
+    })
+
     checkConfig( c =>
       if (c.command.isEmpty) failure("Command can't be empty") else success
     )
@@ -76,6 +91,7 @@ object MigrateTable {
          config.command match {
            case "export" => runExport(config)
            case "import" => runImport(config)
+           case "transform" => runTransform(config)
          }
     }
     System.exit(0)
@@ -123,6 +139,42 @@ object MigrateTable {
 
       logger.info(s"Import end. Imported $count rows")
     }
+  }
+
+  private def addColumn(line: String, name: String, value: String): String = {
+    val tree = mapper.readTree(line).asInstanceOf[ObjectNode]
+    if (tree.has(name)) {
+      throw new IllegalArgumentException(s"Can't add column with name: ${name}. Column already exists!")
+    }
+    tree.put(name, value)
+    tree.toString
+  }
+
+  def runTransform(config: Config): Unit = {
+    logger.info("Transform start")
+
+    val lines = Source.fromFile(config.source).getLines().filter(!_.isEmpty).toSeq
+
+    val transformed: Seq[String] = lines.map( line => {
+      config.subCommand match {
+        case "add-column" => addColumn(line, config.addColumnConfig.name, config.addColumnConfig.value)
+        case _ => line
+      }
+    })
+
+    var count = 0
+    withPrintWriter(new File(config.destination)) { writer =>
+      transformed.foreach { string =>
+        writer.write(string)
+        writer.write("\n")
+        count = count + 1
+        if (count % config.debugThreshold == 0) {
+          logger.debug(s"Transformed $count rows")
+        }
+      }
+    }
+
+    logger.info(s"Transform end. Transformed $count rows")
   }
 
   private def withSession(hostname: String, port: Int, keyspace: String)(op: Session => Unit) = {
