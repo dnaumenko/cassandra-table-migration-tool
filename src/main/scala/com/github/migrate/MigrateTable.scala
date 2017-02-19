@@ -142,7 +142,8 @@ object MigrateTable {
   }
 
   private def addColumn(line: String, name: String, value: String): String = {
-    val tree = mapper.readTree(line).asInstanceOf[ObjectNode]
+    val prettified = line.replace("\u0000", "")
+    val tree = mapper.readTree(prettified).asInstanceOf[ObjectNode]
     if (tree.has(name)) {
       throw new IllegalArgumentException(s"Can't add column with name: ${name}. Column already exists!")
     }
